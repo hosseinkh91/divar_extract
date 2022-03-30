@@ -47,54 +47,52 @@ for link in cars_link:
     kilometer_xpath = '//span[@class="kt-group-row-item__value"]'
     year_xpath = '//span[@class="kt-group-row-item__value"]'
     price_xpath = '//p[@class="kt-unexpandable-row__value"]'
+    body_xpath = '//*[@id="app"]/div[3]/div[1]/div[1]/div/div[4]/div[6]/div[2]/p'
     search_bar = driver.find_elements(by=By.XPATH, value=kilometer_xpath)
     search_bar1 = driver.find_elements(by=By.XPATH, value=price_xpath)
+    search_bar2 = driver.find_element(by=By.XPATH, value=body_xpath)
     car_spec = []
     for item in search_bar1:
         find_class = str(item.text).find('تومان')
         if find_class != -1:
-            english_price = unidecode(item.text)
-            english_price = english_price.replace(',', '').replace('twmn', '')
-            car_spec.append(int(english_price))
+            price = item.text
+            car_spec.append(price)
+            insurance_time = search_bar2.text
+            car_spec.append(insurance_time)
             for text in search_bar:
                 car_spec.append(text.text)
-                car_spec[1] = unidecode(car_spec[1].replace(',', ''))
-    car_spec[2] = unidecode(car_spec[2])
-    car_spec[2] = int(car_spec[2])
-    car_spec.remove(car_spec[3])
     all_cars.append(car_spec)
-for string in all_cars:
-    string[1] = int(string[1])
+
 print(len(all_cars), 'cars information received !')
 print(all_cars)
 
-print("creating to db...")
-
-mydb = connect(
-  host="127.0.0.1",
-  user="root",
-  password=""
-)
-
-
-db_cursor = mydb.cursor()
-random_number = randint(1, 100)
-database_name = 'hossein_kharazi%i' % random_number
-create_query = 'CREATE DATABASE %s' % database_name
-db_cursor.execute(create_query)
-cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
-db_cursor = cnx.cursor()
-use_query = 'USE %s' % database_name
-db_cursor.execute(use_query)
-db_cursor.execute('CREATE TABLE Specifications(model int(4), mileage int(15), price int(20));')
-
-print("connected to db.")
-for car in all_cars:
-    query = 'INSERT INTO Specifications VALUES (\'%i\', \'%i\', \'%i\') ;' % (car[2], car[1], car[0])
-    cursor = cnx.cursor()
-    cursor.execute(query)
-    cnx.commit()
-cnx.close()
-print('database %s created and updated.' % database_name)
-
+# print("creating to db...")
+#
+# mydb = connect(
+#   host="127.0.0.1",
+#   user="root",
+#   password=""
+# )
+#
+#
+# db_cursor = mydb.cursor()
+# random_number = randint(1, 100)
+# database_name = 'hossein_kharazi%i' % random_number
+# create_query = 'CREATE DATABASE %s' % database_name
+# db_cursor.execute(create_query)
+# cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+# db_cursor = cnx.cursor()
+# use_query = 'USE %s' % database_name
+# db_cursor.execute(use_query)
+# db_cursor.execute('CREATE TABLE Specifications(model int(4), mileage int(15), price int(20));')
+#
+# print("connected to db.")
+# for car in all_cars:
+#     query = 'INSERT INTO Specifications VALUES (\'%i\', \'%i\', \'%i\') ;' % (car[2], car[1], car[0])
+#     cursor = cnx.cursor()
+#     cursor.execute(query)
+#     cnx.commit()
+# cnx.close()
+# print('database %s created and updated.' % database_name)
+#
 driver.close()
