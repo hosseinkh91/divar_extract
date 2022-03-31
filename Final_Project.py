@@ -1,8 +1,6 @@
 from selenium import webdriver
 from mysql.connector import connect
 from selenium.webdriver.common.by import By
-from unidecode import unidecode
-from random import randint
 # import time
 
 driver = webdriver.Firefox()
@@ -36,7 +34,8 @@ for element in search_all_divs:
     href_value = find_a.get_attribute('href')
     cars_link.append(href_value)
 print(len(cars_link))
-# Now we have a list named cars_link and in this list we have every links of cars for extract data such as price and mileage from them
+# Now we have a list named cars_link
+# and in this list we have every link of cars for extract data such as price and mileage from them
 
 all_cars = []  # this list will include some other lists that have price, model and mileage
 print('Extracting data from', web_page)
@@ -65,34 +64,48 @@ for link in cars_link:
 
 print(len(all_cars), 'cars information received !')
 print(all_cars)
+for i in all_cars:
+    print('0', i[0], '1', i[1], i[2], i[3], i[4])
 
-# print("creating to db...")
-#
-# mydb = connect(
-#   host="127.0.0.1",
-#   user="root",
-#   password=""
-# )
-#
-#
-# db_cursor = mydb.cursor()
-# random_number = randint(1, 100)
-# database_name = 'hossein_kharazi%i' % random_number
-# create_query = 'CREATE DATABASE %s' % database_name
-# db_cursor.execute(create_query)
-# cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
-# db_cursor = cnx.cursor()
-# use_query = 'USE %s' % database_name
-# db_cursor.execute(use_query)
-# db_cursor.execute('CREATE TABLE Specifications(model int(4), mileage int(15), price int(20));')
-#
-# print("connected to db.")
-# for car in all_cars:
-#     query = 'INSERT INTO Specifications VALUES (\'%i\', \'%i\', \'%i\') ;' % (car[2], car[1], car[0])
-#     cursor = cnx.cursor()
-#     cursor.execute(query)
-#     cnx.commit()
-# cnx.close()
-# print('database %s created and updated.' % database_name)
-#
+
+print("creating to db...")
+
+mydb = connect(
+  host="127.0.0.1",
+  user="root",
+  password=""
+)
+db_cursor = mydb.cursor()
+database_name = 'h_kh'
+try:
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+
+except:
+    create_query = 'CREATE DATABASE %s' % database_name
+    db_cursor.execute(create_query)
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+
+db_cursor = cnx.cursor()
+use_query = 'USE %s' % database_name
+db_cursor.execute(use_query)
+# db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), insurance_time varchar(10), price varchar(30));')
+
+print("connected to db.")
+for car in all_cars:
+    existing_query = 'SELECT * FROM cars WHERE model=\'%s\' AND mileage=\'%s\' AND color=\'%s\' AND insurance_time=\'%s\' AND price=\'%s\'' % (car[3], car[2], car[4], car[1], car[0])
+    db_cursor.execute(existing_query)
+    existing_values = db_cursor.fetchall()
+    if existing_values:
+        pass
+    else:
+        query = 'INSERT INTO cars VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\') ;' % (car[3], car[2], car[4], car[1], car[0])
+        cursor = cnx.cursor()
+        cursor.execute(query)
+        cnx.commit()
+
+
+cnx.close()
+
+print('database %s created and updated.' % database_name)
+
 driver.close()
