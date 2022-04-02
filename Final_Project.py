@@ -16,13 +16,10 @@ driver.get(web_page)
 #     i = i+1
 
 """
-This is Divar's Dom
+This is Diver's Dom
 
-        <div class="post-card-item kt-col-6 kt-col-xxl-4">
-            <a class="kt-post-card kt-post-card--outlined" href="/v/پژو-206-تیپ-۲-مدل-۱۳۹۷_سواری-و-وانت_تهران_رباط-کریم_دیوار/gY-YC3An">
-            </a>
-        </div>
-"""
+        <div class="post-card-item kt-col-6 kt-col-xxl-4"> <a class="kt-post-card kt-post-card--outlined" 
+        href="/v/پژو-206-تیپ-۲-مدل-۱۳۹۷_سواری-و-وانت_تهران_رباط-کریم_دیوار/gY-YC3An"> </a> </div> """
 
 
 div_XPath = '//div[@class="post-card-item kt-col-6 kt-col-xxl-4"]'
@@ -46,26 +43,27 @@ for link in cars_link:
     kilometer_xpath = '//span[@class="kt-group-row-item__value"]'
     year_xpath = '//span[@class="kt-group-row-item__value"]'
     price_xpath = '//p[@class="kt-unexpandable-row__value"]'
-    body_xpath = '//*[@id="app"]/div[3]/div[1]/div[1]/div/div[4]/div[6]/div[2]/p'
-    search_bar = driver.find_elements(by=By.XPATH, value=kilometer_xpath)
-    search_bar1 = driver.find_elements(by=By.XPATH, value=price_xpath)
-    search_bar2 = driver.find_element(by=By.XPATH, value=body_xpath)
+    insurance_xpath = '//p[@class="kt-unexpandable-row__value"]'
+    search_mileage = driver.find_elements(by=By.XPATH, value=kilometer_xpath)
+    search_price = driver.find_elements(by=By.XPATH, value=price_xpath)
+    search_insurance = driver.find_elements(by=By.XPATH, value=insurance_xpath)
     car_spec = []
-    for item in search_bar1:
-        find_class = str(item.text).find('تومان')
-        if find_class != -1:
+    for item in search_price:
+        find_class_price = str(item.text).find('تومان')
+        if find_class_price != -1:
             price = item.text
             car_spec.append(price)
-            insurance_time = search_bar2.text
-            car_spec.append(insurance_time)
-            for text in search_bar:
+            for text in search_mileage:
                 car_spec.append(text.text)
+    for item1 in search_insurance:
+        find_insurance = str(item1.text).find('ماه')
+        if find_insurance != -1:
+            insurance_time = item1.text.replace('\u200c', ' ')
+            car_spec.append(insurance_time)
     all_cars.append(car_spec)
 
 print(len(all_cars), 'cars information received !')
 print(all_cars)
-for i in all_cars:
-    print('0', i[0], '1', i[1], i[2], i[3], i[4])
 
 
 print("creating to db...")
@@ -78,18 +76,22 @@ mydb = connect(
 db_cursor = mydb.cursor()
 database_name = 'h_kh'
 try:
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name, charset="utf8")
 
-except:
+except (Exception,):
+    pass
     create_query = 'CREATE DATABASE %s' % database_name
     db_cursor.execute(create_query)
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name, charset="utf8")
 
 db_cursor = cnx.cursor()
 use_query = 'USE %s' % database_name
 db_cursor.execute(use_query)
-# db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), insurance_time varchar(10), price varchar(30));')
 
+try:
+    db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), insurance_time varchar(10), price varchar(30)) CHARACTER SET utf8 COLLATE utf8_general_ci;')
+except (Exception,):
+    pass
 print("connected to db.")
 for car in all_cars:
     existing_query = 'SELECT * FROM cars WHERE model=\'%s\' AND mileage=\'%s\' AND color=\'%s\' AND insurance_time=\'%s\' AND price=\'%s\'' % (car[3], car[2], car[4], car[1], car[0])
