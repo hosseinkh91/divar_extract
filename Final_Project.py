@@ -30,7 +30,6 @@ for element in search_all_divs:
     find_a = element.find_element(by=By.TAG_NAME, value='a')
     href_value = find_a.get_attribute('href')
     cars_link.append(href_value)
-print(len(cars_link))
 # Now we have a list named cars_link
 # and in this list we have every link of cars for extract data such as price and mileage from them
 
@@ -39,7 +38,7 @@ print('Extracting data from', web_page)
 print('wait a couple minutes...')
 for link in cars_link:
     # time.sleep(1)
-    single_link = driver.get(str(link))
+    driver.get(str(link))
     kilometer_xpath = '//span[@class="kt-group-row-item__value"]'
     year_xpath = '//span[@class="kt-group-row-item__value"]'
     price_xpath = '//p[@class="kt-unexpandable-row__value"]'
@@ -64,7 +63,8 @@ for link in cars_link:
 
 print(len(all_cars), 'cars information received !')
 print(all_cars)
-
+for i in all_cars:
+    print(i[1])
 
 print("creating to db...")
 
@@ -76,33 +76,37 @@ mydb = connect(
 db_cursor = mydb.cursor()
 database_name = 'h_kh'
 try:
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name, charset="utf8")
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
 
 except (Exception,):
-    pass
     create_query = 'CREATE DATABASE %s' % database_name
     db_cursor.execute(create_query)
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name, charset="utf8")
+    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
 
 db_cursor = cnx.cursor()
 use_query = 'USE %s' % database_name
 db_cursor.execute(use_query)
-
 try:
-    db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), insurance_time varchar(10), price varchar(30)) CHARACTER SET utf8 COLLATE utf8_general_ci;')
+    db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), '
+                      'insurance_time varchar(10), price varchar(30)) CHARACTER SET utf8 COLLATE utf8_general_ci;')
 except (Exception,):
     pass
+db_cursor.execute('ALTER TABLE cars CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;')
+db_cursor.execute('ALTER TABLE cars DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;')
+
 print("connected to db.")
 for car in all_cars:
-    existing_query = 'SELECT * FROM cars WHERE model=\'%s\' AND mileage=\'%s\' AND color=\'%s\' AND insurance_time=\'%s\' AND price=\'%s\'' % (car[3], car[2], car[4], car[1], car[0])
+    existing_query = 'SELECT * FROM cars WHERE model=\'%s\' AND mileage=\'%s\' AND color=\'%s\' ' \
+                     'AND insurance_time=\'%s\' AND price=\'%s\'' % (car[2], car[1], car[3], car[4], car[0])
     db_cursor.execute(existing_query)
     existing_values = db_cursor.fetchall()
     if existing_values:
         pass
     else:
-        query = 'INSERT INTO cars VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\') ;' % (car[3], car[2], car[4], car[1], car[0])
+        insert_query = 'INSERT INTO cars VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\');'\
+                % (car[2], car[1], car[3], car[4], car[0])
         cursor = cnx.cursor()
-        cursor.execute(query)
+        cursor.execute(insert_query)
         cnx.commit()
 
 
