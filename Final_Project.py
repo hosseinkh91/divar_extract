@@ -18,35 +18,40 @@ driver.get(web_page)
 """
 This is Diver's Dom
 
-        <div class="post-card-item kt-col-6 kt-col-xxl-4"> <a class="kt-post-card kt-post-card--outlined" 
-        href="/v/پژو-206-تیپ-۲-مدل-۱۳۹۷_سواری-و-وانت_تهران_رباط-کریم_دیوار/gY-YC3An"> </a> </div> """
+        <div class="post-card-item kt-col-6 kt-col-xxl-4">
+            <a class="kt-post-card kt-post-card--outlined" href="/v/پژو-206-تیپ-۲-مدل-۱۳۹۷_سواری-و-وانت_تهران_رباط-کریم_دیوار/gY-YC3An">
+            </a>
+        </div>
+"""
 
+xpaths = {'div': '//div[@class="post-card-item kt-col-6 kt-col-xxl-4"]',
+              'mileage': '//span[@class="kt-group-row-item__value"]',
+              'year': '//span[@class="kt-group-row-item__value"]',
+              'price_insurance': '//p[@class="kt-unexpandable-row__value"]'
+              }
 
-div_XPath = '//div[@class="post-card-item kt-col-6 kt-col-xxl-4"]'
-search_all_divs = driver.find_elements(by=By.XPATH, value=div_XPath)
-cars_link = []
+search_all_divs = driver.find_elements(by=By.XPATH, value=xpaths['div'])
+cars_links = []
 
 for element in search_all_divs:
     find_a = element.find_element(by=By.TAG_NAME, value='a')
     href_value = find_a.get_attribute('href')
-    cars_link.append(href_value)
-# Now we have a list named cars_link
+    cars_links.append(href_value)
+# Now we have a list named cars_links
 # and in this list we have every link of cars for extract data such as price and mileage from them
 
 all_cars = []  # this list will include some other lists that have price, model and mileage
 print('Extracting data from', web_page)
 print('wait a couple minutes...')
-for link in cars_link:
+for link in cars_links:
     # time.sleep(1)
     driver.get(str(link))
-    kilometer_xpath = '//span[@class="kt-group-row-item__value"]'
-    year_xpath = '//span[@class="kt-group-row-item__value"]'
-    price_xpath = '//p[@class="kt-unexpandable-row__value"]'
-    insurance_xpath = '//p[@class="kt-unexpandable-row__value"]'
-    search_mileage = driver.find_elements(by=By.XPATH, value=kilometer_xpath)
-    search_price = driver.find_elements(by=By.XPATH, value=price_xpath)
-    search_insurance = driver.find_elements(by=By.XPATH, value=insurance_xpath)
+    search_mileage = driver.find_elements(by=By.XPATH, value=xpaths['mileage'])
+    search_price = driver.find_elements(by=By.XPATH, value=xpaths['price_insurance'])
+    search_insurance = driver.find_elements(by=By.XPATH, value=xpaths['price_insurance'])
+
     car_spec = []
+
     for item in search_price:
         find_class_price = str(item.text).find('تومان')
         if find_class_price != -1:
@@ -61,12 +66,15 @@ for link in cars_link:
             car_spec.append(insurance_time)
     all_cars.append(car_spec)
 
+# Delete cars that have incomplete information
+for car in all_cars:
+    if len(car) != 5:
+        all_cars.remove(car)
+
 print(len(all_cars), 'cars information received !')
 print(all_cars)
-for i in all_cars:
-    print(i[1])
 
-print("creating to db...")
+print("connecting to db...")
 
 mydb = connect(
   host="127.0.0.1",
@@ -75,6 +83,7 @@ mydb = connect(
 )
 db_cursor = mydb.cursor()
 database_name = 'h_kh'
+
 try:
     cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
 
@@ -83,18 +92,24 @@ except (Exception,):
     db_cursor.execute(create_query)
     cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
 
+print("connected to db.")
+
 db_cursor = cnx.cursor()
 use_query = 'USE %s' % database_name
 db_cursor.execute(use_query)
+
 try:
-    db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30), color varchar(15), '
-                      'insurance_time varchar(10), price varchar(30)) CHARACTER SET utf8 COLLATE utf8_general_ci;')
+    db_cursor.execute('CREATE TABLE cars (model varchar(6), mileage varchar(30),'
+                      ' color varchar(15), insurance_time varchar(10), price varchar(30))'
+                      ' CHARACTER SET utf8 COLLATE utf8_general_ci;')
 except (Exception,):
     pass
+
+# Change database setting for adding persian string
 db_cursor.execute('ALTER TABLE cars CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;')
 db_cursor.execute('ALTER TABLE cars DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;')
 
-print("connected to db.")
+# Check if data existed don't add to db
 for car in all_cars:
     existing_query = 'SELECT * FROM cars WHERE model=\'%s\' AND mileage=\'%s\' AND color=\'%s\' ' \
                      'AND insurance_time=\'%s\' AND price=\'%s\'' % (car[2], car[1], car[3], car[4], car[0])
@@ -103,8 +118,8 @@ for car in all_cars:
     if existing_values:
         pass
     else:
-        insert_query = 'INSERT INTO cars VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\');'\
-                % (car[2], car[1], car[3], car[4], car[0])
+        insert_query = 'INSERT INTO cars VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\');' \
+                       % (car[2], car[1], car[3], car[4], car[0])
         cursor = cnx.cursor()
         cursor.execute(insert_query)
         cnx.commit()
@@ -112,6 +127,6 @@ for car in all_cars:
 
 cnx.close()
 
-print('database %s created and updated.' % database_name)
+print('database %s updated.' % database_name)
 
 driver.close()
