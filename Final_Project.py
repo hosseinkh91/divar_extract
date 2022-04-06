@@ -47,19 +47,18 @@ for link in cars_links:
     # time.sleep(1)
     driver.get(str(link))
     search_mileage = driver.find_elements(by=By.XPATH, value=xpaths['mileage'])
-    search_price = driver.find_elements(by=By.XPATH, value=xpaths['price_insurance'])
-    search_insurance = driver.find_elements(by=By.XPATH, value=xpaths['price_insurance'])
+    search_price_insurance = driver.find_elements(by=By.XPATH, value=xpaths['price_insurance'])
 
     car_spec = []
 
-    for item in search_price:
+    for item in search_price_insurance:
         find_class_price = str(item.text).find('تومان')
         if find_class_price != -1:
             price = item.text
             car_spec.append(price)
             for text in search_mileage:
                 car_spec.append(text.text)
-    for item1 in search_insurance:
+    for item1 in search_price_insurance:
         find_insurance = str(item1.text).find('ماه')
         if find_insurance != -1:
             insurance_time = item1.text.replace('\u200c', ' ')
@@ -79,18 +78,18 @@ print("connecting to db...")
 mydb = connect(
   host="127.0.0.1",
   user="root",
-  password=""
+  password="1234", auth_plugin='mysql_native_password'
 )
 db_cursor = mydb.cursor()
 database_name = 'h_kh'
 
 try:
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+    cnx = connect(user='root', password='1234', host='127.0.0.1', database=database_name, auth_plugin='mysql_native_password')
 
 except (Exception,):
     create_query = 'CREATE DATABASE %s' % database_name
     db_cursor.execute(create_query)
-    cnx = connect(user='root', password='', host='127.0.0.1', database=database_name)
+    cnx = connect(user='root', password='1234', host='127.0.0.1', database=database_name, auth_plugin='mysql_native_password')
 
 print("connected to db.")
 
