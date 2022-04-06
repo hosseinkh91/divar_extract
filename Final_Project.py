@@ -65,6 +65,7 @@ for link in cars_links:
             car_spec.append(insurance_time)
     all_cars.append(car_spec)
 
+all_cars.sort(reverse=True)
 # Delete cars that have incomplete information
 for car in all_cars:
     if len(car) != 5:
@@ -75,21 +76,23 @@ print(all_cars)
 
 print("connecting to db...")
 
+password = input('plz enter your db password : ')
 mydb = connect(
-  host="127.0.0.1",
-  user="root",
-  password="1234", auth_plugin='mysql_native_password'
+  host="127.0.0.1", user="root",
+  password=password, auth_plugin='mysql_native_password'
 )
 db_cursor = mydb.cursor()
 database_name = 'h_kh'
 
 try:
-    cnx = connect(user='root', password='1234', host='127.0.0.1', database=database_name, auth_plugin='mysql_native_password')
+    cnx = connect(user='root', password=password, host='127.0.0.1',
+                  database=database_name, auth_plugin='mysql_native_password')
 
 except (Exception,):
     create_query = 'CREATE DATABASE %s' % database_name
     db_cursor.execute(create_query)
-    cnx = connect(user='root', password='1234', host='127.0.0.1', database=database_name, auth_plugin='mysql_native_password')
+    cnx = connect(user='root', password=password,
+                  host='127.0.0.1', database=database_name, auth_plugin='mysql_native_password')
 
 print("connected to db.")
 
